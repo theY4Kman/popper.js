@@ -2493,6 +2493,12 @@ fast-levenshtein@~2.0.4:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
 
+fastdom@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/fastdom/-/fastdom-1.0.8.tgz#10f9d36998fd6efae30e529597d788e750c9febb"
+  dependencies:
+    strictdom "^1.0.1"
+
 figures@^1.7.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/figures/-/figures-1.7.0.tgz#cbe1e3affcf1cd44b80cadfed28dc793a9701d2e"
@@ -6052,6 +6058,10 @@ stream-to-observable@^0.1.0:
 stream-via@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/stream-via/-/stream-via-1.0.4.tgz#8dccbb0ac909328eb8bc8e2a4bd3934afdaf606c"
+
+strictdom@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/strictdom/-/strictdom-1.0.1.tgz#189de91649f73d44d59b8432efa68ef9d2659460"
 
 string-width@^1.0.1, string-width@^1.0.2:
   version "1.0.2"

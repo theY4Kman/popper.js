@@ -17,6 +17,14 @@ export default function runModifiers(modifiers, data, ends) {
     ? modifiers
     : modifiers.slice(0, findIndex(modifiers, 'name', ends));
 
+  //XXX//////////////////////////////////////////////////////////////////////////////////////////////////
+  //XXX//////////////////////////////////////////////////////////////////////////////////////////////////
+  //XXX//////////////////////////////////////////////////////////////////////////////////////////////////
+  console.info('Using promisified pipeline');
+  //XXX//////////////////////////////////////////////////////////////////////////////////////////////////
+
+  let pipeline = Promise.resolve(data);
+
   modifiersToRun.forEach(modifier => {
     if (modifier['function']) { // eslint-disable-line dot-notation
       console.warn('`modifier.function` is deprecated, use `modifier.fn`!');
@@ -29,9 +37,9 @@ export default function runModifiers(modifiers, data, ends) {
       data.offsets.popper = getClientRect(data.offsets.popper);
       data.offsets.reference = getClientRect(data.offsets.reference);
 
-      data = fn(data, modifier);
+      pipeline = pipeline.then(data => Promise.resolve(fn(data, modifier)));
     }
   });
 
-  return data;
+  return pipeline;
 }

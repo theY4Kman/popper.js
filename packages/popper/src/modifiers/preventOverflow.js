@@ -1,6 +1,7 @@
 import getOffsetParent from '../utils/getOffsetParent';
 import getBoundaries from '../utils/getBoundaries';
 import getSupportedPropertyName from '../utils/getSupportedPropertyName';
+import fastdom from '../utils/fastdom';
 
 /**
  * @function
@@ -10,80 +11,102 @@ import getSupportedPropertyName from '../utils/getSupportedPropertyName';
  * @returns {Object} The data object, properly modified
  */
 export default function preventOverflow(data, options) {
-  let boundariesElement =
-    options.boundariesElement || getOffsetParent(data.instance.popper);
+  return fastdom.measure(() => {
+    let boundariesElement =
+      options.boundariesElement || getOffsetParent(data.instance.popper);
 
-  // If offsetParent is the reference element, we really want to
-  // go one step up and use the next offsetParent as reference to
-  // avoid to make this modifier completely useless and look like broken
-  if (data.instance.reference === boundariesElement) {
-    boundariesElement = getOffsetParent(boundariesElement);
-  }
+    // If offsetParent is the reference element, we really want to
+    // go one step up and use the next offsetParent as reference to
+    // avoid to make this modifier completely useless and look like broken
+    if (data.instance.reference === boundariesElement) {
+      boundariesElement = getOffsetParent(boundariesElement);
+    }
 
-  // NOTE: DOM access here
-  // resets the popper's position so that the document size can be calculated excluding
-  // the size of the popper element itself
-  const transformProp = getSupportedPropertyName('transform');
-  const popperStyles = data.instance.popper.style; // assignment to help minification
-  const { top, left, [transformProp]: transform } = popperStyles;
-  popperStyles.top = '';
-  popperStyles.left = '';
-  popperStyles[transformProp] = '';
+    // NOTE: DOM access here
+    // resets the popper's position so that the document size can be calculated excluding
+    // the size of the popper element itself
+    const transformProp = getSupportedPropertyName('transform');
+    const popperStyles = data.instance.popper.style; // assignment to help minification
+    const { top, left, [transformProp]: transform } = popperStyles;
 
-  const boundaries = getBoundaries(
-    data.instance.popper,
-    data.instance.reference,
-    options.padding,
-    boundariesElement,
-    data.positionFixed
-  );
+    return {
+      boundariesElement,
+      transformProp,
+      popperStyles,
+      top,
+      left,
+      transform,
+    };
 
-  // NOTE: DOM access here
-  // restores the original style properties after the offsets have been computed
-  popperStyles.top = top;
-  popperStyles.left = left;
-  popperStyles[transformProp] = transform;
+  }).then(({ transformProp, popperStyles, ...props }) => fastdom.mutate(() => {
+    popperStyles.top = '';
+    popperStyles.left = '';
+    popperStyles[transformProp] = '';
 
-  options.boundaries = boundaries;
+    return { transformProp, popperStyles, ...props };
 
-  const order = options.priority;
-  let popper = data.offsets.popper;
+  })).then(({ boundariesElement, ...props }) => fastdom.measure(() => {
+    const boundaries = getBoundaries(
+      data.instance.popper,
+      data.instance.reference,
+      options.padding,
+      boundariesElement,
+      data.positionFixed
+    );
 
-  const check = {
-    primary(placement) {
-      let value = popper[placement];
-      if (
-        popper[placement] < boundaries[placement] &&
-        !options.escapeWithReference
-      ) {
-        value = Math.max(popper[placement], boundaries[placement]);
-      }
-      return { [placement]: value };
-    },
-    secondary(placement) {
-      const mainSide = placement === 'right' ? 'left' : 'top';
-      let value = popper[mainSide];
-      if (
-        popper[placement] > boundaries[placement] &&
-        !options.escapeWithReference
-      ) {
-        value = Math.min(
-          popper[mainSide],
-          boundaries[placement] -
-            (placement === 'right' ? popper.width : popper.height)
-        );
-      }
-      return { [mainSide]: value };
-    },
-  };
+    return { boundaries, boundariesElement, ...props };
 
-  order.forEach(placement => {
-    const side =
-      ['left', 'top'].indexOf(placement) !== -1 ? 'primary' : 'secondary';
-    popper = { ...popper, ...check[side](placement) };
+  })).then(({ popperStyles, top, left, transformProp, transform, ...props }) => fastdom.mutate(() => {
+    // NOTE: DOM access here
+    // restores the original style properties after the offsets have been computed
+    popperStyles.top = top;
+    popperStyles.left = left;
+    popperStyles[transformProp] = transform;
+
+    return { popperStyles, top, left, transformProp, transform, ...props };
+
+  })).then(({ boundaries }) => {
+    options.boundaries = boundaries;
+
+    const order = options.priority;
+    let popper = data.offsets.popper;
+
+    const check = {
+      primary(placement) {
+        let value = popper[placement];
+        if (
+          popper[placement] < boundaries[placement] &&
+          !options.escapeWithReference
+        ) {
+          value = Math.max(popper[placement], boundaries[placement]);
+        }
+        return { [placement]: value };
+      },
+      secondary(placement) {
+        const mainSide = placement === 'right' ? 'left' : 'top';
+        let value = popper[mainSide];
+        if (
+          popper[placement] > boundaries[placement] &&
+          !options.escapeWithReference
+        ) {
+          value = Math.min(
+            popper[mainSide],
+            boundaries[placement] -
+              (placement === 'right' ? popper.width : popper.height)
+          );
+        }
+        return { [mainSide]: value };
+      },
+    };
+
+    order.forEach(placement => {
+      const side =
+        ['left', 'top'].indexOf(placement) !== -1 ? 'primary' : 'secondary';
+      popper = { ...popper, ...check[side](placement) };
+    });
+
+    data.offsets.popper = popper;
+
+    return data;
   });
-
-  data.offsets.popper = popper;
-
-  return data;
 }

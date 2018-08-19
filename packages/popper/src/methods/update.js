@@ -16,7 +16,7 @@ export default function update() {
     return;
   }
 
-  let data = {
+  const data = {
     instance: this,
     styles: {},
     arrowStyles: {},
@@ -62,14 +62,14 @@ export default function update() {
     : 'absolute';
 
   // run the modifiers
-  data = runModifiers(this.modifiers, data);
-
-  // the first `update` will call `onCreate` callback
-  // the other ones will call `onUpdate` callback
-  if (!this.state.isCreated) {
-    this.state.isCreated = true;
-    this.options.onCreate(data);
-  } else {
-    this.options.onUpdate(data);
-  }
+  runModifiers(this.modifiers, data).then(data => {
+    // the first `update` will call `onCreate` callback
+    // the other ones will call `onUpdate` callback
+    if (!this.state.isCreated) {
+      this.state.isCreated = true;
+      this.options.onCreate(data);
+    } else {
+      this.options.onUpdate(data);
+    }
+  });
 }

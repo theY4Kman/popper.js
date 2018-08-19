@@ -10,7 +10,7 @@ const watchEnabled = argv.watch;
 // Configs
 const babelConfig = require('@popperjs/babel-config');
 const sourcemap = true;
-const external = ['popper.js'];
+const external = ['popper.js', 'fastdom', 'fastdom/extensions/fastdom-promised'];
 const globals = { 'popper.js': 'Popper' };
 
 function bundle({ input, file, name, banner, miniBanner }) {
